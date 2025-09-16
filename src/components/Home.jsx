@@ -199,7 +199,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
             })
             
             .then(resposta2 =>{ console.log(response)  
-            setTasks(resposta2.json())
+            setTasks(resposta2.data)
             localStorage.setItem("prompt",newTask)
             setIsLoading(false)      
         })
