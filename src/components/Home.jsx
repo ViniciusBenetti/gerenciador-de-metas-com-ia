@@ -12,6 +12,71 @@ import {
   Trash2
 } from 'lucide-react'
 import axios from 'axios'
+import { set } from 'date-fns'
+
+// Componente de Loading Inovador
+const InnovativeLoader = ({ size = 'md', message = 'Carregando...' }) => {
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-8 h-8', 
+    lg: 'w-12 h-12'
+  }
+  
+  return (
+    <div className="flex flex-col items-center justify-center space-y-3">
+      <div className="relative">
+        {/* Círculo externo pulsante com gradiente */}
+        <div className={`${sizeClasses[size]} rounded-full border-4 border-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin`}>
+          <div className="absolute inset-1 bg-white dark:bg-slate-800 rounded-full"></div>
+        </div>
+        
+        {/* Núcleo central com animação de escala */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></div>
+        </div>
+        
+        {/* Partículas orbitais */}
+        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }}>
+          <div className="absolute -top-1 left-1/2 w-1 h-1 bg-blue-400 rounded-full transform -translate-x-1/2 animate-ping"></div>
+        </div>
+        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '1.5s' }}>
+          <div className="absolute top-1/2 -right-1 w-1 h-1 bg-purple-400 rounded-full transform -translate-y-1/2 animate-ping"></div>
+        </div>
+        
+        {/* Anel de progresso */}
+        <div className="absolute inset-0 rounded-full">
+          <svg className={`${sizeClasses[size]} transform -rotate-90`}>
+            <circle
+              cx="50%"
+              cy="50%"
+              r="45%"
+              fill="none"
+              stroke="url(#gradient)"
+              strokeWidth="2"
+              strokeDasharray="50 50"
+              className="animate-spin"
+              style={{ animationDuration: '3s' }}
+            />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#8B5CF6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+      
+      {/* Texto de carregamento com efeito de typing */}
+      {message && (
+        <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+          <span className="inline-block animate-pulse">{message}</span>
+          <span className="inline-block animate-bounce ml-1">...</span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   const navigate = useNavigate()
@@ -31,6 +96,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   
       navigate('/')
     }else{
+      setIsLoading(true)
       axios.get('https://vinixodin.com/api/cronometrar3')
       
     .then(response => {     
@@ -49,10 +115,16 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         
     })
       
-    .catch(error => console.log(error));
+    .catch(error => console.log(error).finally(()=>setIsLoading(false))
+  
+  );
     }
-    let prompt = localStorage.getItem("prompt")
-    setNewTask(prompt)
+    if (typeof localStorage !== 'undefined') {
+      const prompt = localStorage.getItem("prompt")
+      if (prompt) {
+        setNewTask(prompt)
+      }
+    }
     
   }, [])
 
@@ -88,8 +160,10 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!newTask.trim()) return
-    setIsLoading(true)
+    if (!newTask.trim()) 
+    return 
+  
+   setIsLoading(true)
 
     await axios({
     
@@ -107,6 +181,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     })
     
         .then(response =>{ 
+          const tarefasGeradas = response.data;
        
             axios({
             
@@ -117,7 +192,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
               data: {
             
                 email:sessionStorage.getItem("chave"),
-                tarefas:response.json()
+                tarefas:tarefasGeradas
             
               }
             
@@ -168,6 +243,13 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   }
 
   const renderTasks = () => {
+    if (isLoading) {
+    return (
+      <div className="py-10">
+        <InnovativeLoader size="md" message="Carregando suas metas" />
+      </div>
+    );
+  }
     if (viewMode === 'json') {
       return (
       <div className="relative">
