@@ -11,60 +11,103 @@ import {
   Plus,
   CheckCircle2,
   Clock,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-react'
-
+import axios from 'axios'
 function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   const [tasks, setTasks] = useState([])
   const [newTask, setNewTask] = useState('')
-  const [viewMode, setViewMode] = useState('list') // 'list', 'json', 'prompt'
+  const [viewMode, setViewMode] = useState('list')
   const [isLoading, setIsLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false); 
+
+
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      try {
+
+        
+     
+      } catch (error) {
+        alert('JSON inválido! Por favor, corrija o formato.');
+        return;
+      }
+    }
+    setIsEditing(!isEditing); 
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!newTask.trim()) return
-
     setIsLoading(true)
+
+    await axios({
     
-    // Simular processamento
-    setTimeout(() => {
-      const task = {
-        id: Date.now(),
-        text: newTask,
-        completed: false,
-        createdAt: new Date().toISOString()
-      }
+        method: 'post',
+    
+        url: 'https://flask232.onrender.com',
+    
+        data: {
+    
+            
+            planning:newTask
+    
+        }
+    
+    })
+    
+        .then(response =>{ 
+
+            setTasks(response.json())
+            localStorage.setItem("ultimo prompt",newTask)
+            setIsLoading(false)}
+    
+    )
+    
+        .catch(error =>{ console.log(error);
+            setTasks([])
+            setNewTask('')
+            setIsLoading(false)});
+    
       
-      setTasks(prev => [...prev, task])
-      setNewTask('')
-      setIsLoading(false)
-    }, 500)
   }
 
-  const toggleTask = (id) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ))
-  }
-
-  const deleteTask = (id) => {
-    setTasks(prev => prev.filter(task => task.id !== id))
+  const deleteTask = (label) => {
+    
   }
 
   const renderTasks = () => {
     if (viewMode === 'json') {
       return (
-        <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200">
-          {JSON.stringify(tasks, null, 2)}
-        </pre>
-      )
+      <div className="relative">
+        
+        <button
+          onClick={handleToggleEdit}
+          className="absolute top-2 right-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+        >
+          {isEditing ? 'Concluir' : 'Editar'}
+        </button>
+
+
+        {isEditing ? (
+          <textarea
+            className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200 w-full font-mono"
+            value={tasks}
+            onChange={(e) => setTasks(e.target.value)}
+          />
+        ) : (
+          <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200">
+            {JSON.stringify(tasks, null, 2)}
+          </pre>
+        )}
+      </div>
+    );
     }
 
     if (viewMode === 'prompt') {
-      const prompt = tasks.length > 0 
-        ? `Aqui estão as tarefas do usuário:\n\n${tasks.map((task, index) => 
-            `${index + 1}. ${task.text} ${task.completed ? '✅' : '⏳'}`
-          ).join('\n')}\n\nTotal: ${tasks.length} tarefas (${tasks.filter(t => t.completed).length} concluídas)`
+      const prompt = newTask.length > 0 
+        ? `último prompt:\n\n${newTask}`
         : 'Nenhuma tarefa cadastrada ainda.'
 
       return (
@@ -80,52 +123,34 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         {tasks.length === 0 ? (
           <div className="text-center py-8 text-slate-500 dark:text-slate-400">
             <List className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhuma rotina cadastrada ainda.</p>
-            <p className="text-sm">Adicione sua primeira rotina abaixo!</p>
+            <p>Nenhuma meta cadastrada ainda.</p>
+
           </div>
         ) : (
           tasks.map((task) => (
-            <Card key={task.id} className="p-3 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 flex-1">
-                  <button
-                    onClick={() => toggleTask(task.id)}
-                    className={`p-1 rounded-full transition-colors ${
-                      task.completed 
-                        ? 'text-green-500 hover:text-green-600' 
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-5 h-5" />
-                  </button>
-                  <div className="flex-1">
-                    <p className={`text-sm ${
-                      task.completed 
-                        ? 'line-through text-slate-500 dark:text-slate-400' 
-                        : 'text-slate-700 dark:text-slate-300'
-                    }`}>
-                      {task.text}
-                    </p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Badge variant={task.completed ? "secondary" : "default"} className="text-xs">
-                        {task.completed ? 'Concluída' : 'Pendente'}
-                      </Badge>
-                      <span className="text-xs text-slate-400 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(task.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+            <div
+                key={task.label}
+                className="p-3 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200"
+            >
+                <div className="flex items-center justify-between">
+                <div>
+                <h3 className="text-lg font-semibold">{task.label}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                Início: {task.start_date}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                Fim: {task.end_date} às {task.time}
+                </p>
                 </div>
                 <button
-                  onClick={() => deleteTask(task.id)}
-                  className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                    onClick={() => deleteTask(task.label)}
+                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                 </button>
-              </div>
-            </Card>
-          ))
+                </div>
+            </div>
+            ))
         )}
       </div>
     )
@@ -155,7 +180,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
           {/* Header */}
           <div className="text-center mb-8 pt-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Gerenciador de Rotinas
+              Gerenciador de metas
             </h1>
 
           </div>
@@ -204,10 +229,8 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-slate-800 dark:text-slate-200">
                 <List className="w-5 h-5" />
-                <span>Suas Rotinas</span>
-                <Badge variant="secondary" className="ml-auto">
-                  {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
-                </Badge>
+                <span>Suas Metas</span>
+    
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -224,7 +247,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
                   <Input
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
-                    placeholder="Descreva sua nova rotina..."
+                    placeholder="Descreva as suas metas  - nome, data, horário e data inicial opcional"
                     className="pl-10 h-12 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                     disabled={isLoading}
                   />

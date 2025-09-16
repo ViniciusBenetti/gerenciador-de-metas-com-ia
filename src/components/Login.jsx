@@ -53,6 +53,7 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         setMessage(data.mensagem || 'Operação realizada com sucesso!')
         // Simular login bem-sucedido e navegar para home
         setTimeout(() => {
+          sessionStorage.setItem("chave",formData.email)
           navigate('/home')
         }, 1500)
       } else {
