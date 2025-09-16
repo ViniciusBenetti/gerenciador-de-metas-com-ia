@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Sun, Moon, Eye, EyeOff, Mail, Lock, Brain, UserPlus, LogIn } from "lucide-react";
@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/theme-provider";
-import { authSchema, type AuthFormData, type AuthResponse } from "@shared/schema";
+import { loginSchema, registerSchema, authSchema, type LoginFormData, type RegisterFormData, type AuthFormData, type AuthResponse } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function AuthPage() {
@@ -27,6 +27,7 @@ export default function AuthPage() {
       confirmPassword: "",
       acceptTerms: false,
     },
+    mode: "onChange",
   });
 
   const authMutation = useMutation({
@@ -73,13 +74,20 @@ export default function AuthPage() {
   });
 
   const onSubmit = (data: AuthFormData) => {
-    if (mode === "register" && !data.acceptTerms) {
-      toast({
-        title: "Erro",
-        description: "Você deve aceitar os termos de uso.",
-        variant: "destructive",
-      });
-      return;
+    // Manual validation for registration mode
+    if (mode === "register") {
+      if (!data.confirmPassword || data.password !== data.confirmPassword) {
+        form.setError("confirmPassword", {
+          message: "As senhas não coincidem",
+        });
+        return;
+      }
+      if (!data.acceptTerms) {
+        form.setError("acceptTerms", {
+          message: "Você deve aceitar os termos de uso",
+        });
+        return;
+      }
     }
 
     authMutation.mutate({
@@ -90,9 +98,23 @@ export default function AuthPage() {
   };
 
   const switchMode = (newMode: "login" | "register") => {
+    const currentEmail = form.getValues("email") || "";
     setMode(newMode);
-    form.reset();
+    // Use setTimeout to avoid hook violations during state transitions
+    setTimeout(() => {
+      form.reset({
+        email: currentEmail,
+        password: "",
+        confirmPassword: "",
+        acceptTerms: false,
+      });
+    }, 0);
   };
+
+  // Update form validation when mode changes
+  useEffect(() => {
+    form.clearErrors();
+  }, [mode]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300 relative overflow-hidden">
@@ -254,23 +276,31 @@ export default function AuthPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start space-x-2">
                       <Checkbox
-                        {...form.register("acceptTerms")}
                         id="terms"
-                        className="w-4 h-4"
+                        checked={form.watch("acceptTerms") || false}
+                        onCheckedChange={(checked) => form.setValue("acceptTerms", checked === true)}
+                        className="w-4 h-4 mt-0.5"
                         data-testid="checkbox-terms"
                       />
-                      <Label htmlFor="terms" className="text-sm text-muted-foreground">
-                        Aceito os{" "}
-                        <a href="#" className="text-primary hover:underline">
-                          termos de uso
-                        </a>{" "}
-                        e{" "}
-                        <a href="#" className="text-primary hover:underline">
-                          política de privacidade
-                        </a>
-                      </Label>
+                      <div className="flex-1">
+                        <Label htmlFor="terms" className="text-sm text-muted-foreground">
+                          Aceito os{" "}
+                          <a href="#" className="text-primary hover:underline">
+                            termos de uso
+                          </a>{" "}
+                          e{" "}
+                          <a href="#" className="text-primary hover:underline">
+                            política de privacidade
+                          </a>
+                        </Label>
+                        {form.formState.errors.acceptTerms && (
+                          <p className="text-sm text-destructive mt-1">
+                            {form.formState.errors.acceptTerms.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
