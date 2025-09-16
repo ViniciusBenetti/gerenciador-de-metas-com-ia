@@ -1,33 +1,82 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Input } from '@/components/ui/input.jsx'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
 import { 
   Send, 
   List, 
   Code, 
   FileText, 
   Plus,
-  CheckCircle2,
-  Clock,
-  Trash2,
-  AlertCircle
+  Trash2
 } from 'lucide-react'
 import axios from 'axios'
+
 function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState([])
   const [newTask, setNewTask] = useState('')
   const [viewMode, setViewMode] = useState('list')
   const [isLoading, setIsLoading] = useState(false)
-  const [isEditing, setIsEditing] = useState(false); 
+  const [isEditing, setIsEditing] = useState(false)
 
+ 
+  useEffect(() => {
+    
+    const chave = sessionStorage.getItem("chave")
+
+    
+    if (!chave) {
+  
+      navigate('/')
+    }else{
+      axios.get('https://vinixodin.com/api/cronometrar3')
+      
+    .then(response => {     
+    const userReceiver = response.data.receivers.find(receiver => 
+    receiver.email === userEmail
+    );
+    
+    if (userReceiver) {
+      const userTasks = userReceiver.tarefas;
+      setTasks(userTasks); 
+      console.log('Tarefas do usuário:', userTasks);
+    } else {
+      console.log('Usuário não encontrado');
+      setTasks([]); 
+    }
+        
+    })
+      
+    .catch(error => console.log(error));
+    }
+    let prompt = localStorage.getItem("prompt")
+    setNewTask(prompt)
+    
+  }, [])
 
   const handleToggleEdit = () => {
     if (isEditing) {
       try {
-
-        
+          axios({
+          
+            method: 'post',
+          
+            url: 'https://vinixodin.com/api/cronometrar3',
+          
+            data: {
+          
+              email:sessionStorage.getItem("chave"), 
+              tarefas: tasks
+          
+            }
+          
+          })
+          
+            .then(response => console.log(response))
+          
+            .catch(error => console.log(error));
      
       } catch (error) {
         alert('JSON inválido! Por favor, corrija o formato.');
@@ -58,14 +107,36 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     })
     
         .then(response =>{ 
+       
+            axios({
+            
+              method: 'post',
+            
+              url: 'https://vinixodin.com/api/cronometrar3',
+            
+              data: {
+            
+                email:sessionStorage.getItem("chave"),
+                tarefas:response.json()
+            
+              }
+            
+            })
+            
+            .then(resposta2 =>{ console.log(response)  
+            setTasks(resposta2.json())
+            localStorage.setItem("prompt",newTask)
+            setIsLoading(false)      
+        })
+            
+              .catch(error => console.log(error));
+           }
 
-            setTasks(response.json())
-            localStorage.setItem("ultimo prompt",newTask)
-            setIsLoading(false)}
     
     )
     
         .catch(error =>{ console.log(error);
+  
             setTasks([])
             setNewTask('')
             setIsLoading(false)});
@@ -74,7 +145,26 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   }
 
   const deleteTask = (label) => {
+    axios({
     
+      method: 'post',
+    
+      url: 'https://vinixodin.com/api/apagarCronometrar3',
+    
+      data: {
+    
+        email:sessionStorage.getItem("chave"),
+        label: label
+    
+      }
+    
+    })
+    
+      .then(response =>
+         console.log(response))
+    
+      .catch(error =>
+         console.log(error));
   }
 
   const renderTasks = () => {
@@ -117,7 +207,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       )
     }
 
-    // Default list view
+
     return (
       <div className="space-y-3 max-h-96 overflow-auto">
         {tasks.length === 0 ? (
@@ -158,26 +248,26 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 
   return (
     <div className="min-h-screen transition-all duration-500">
-      {/* Theme Toggle Button */}
+    
       <ThemeToggleButton />
 
-      {/* Background with animated gradient */}
+
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
         </div>
       </div>
 
-      {/* Floating shapes */}
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-float"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-float-delayed"></div>
       </div>
 
-      {/* Main Content */}
+ 
       <div className="relative z-10 min-h-screen p-4">
         <div className="w-full px-[1vw] py-[1vh]">
-          {/* Header */}
+      
           <div className="text-center mb-8 pt-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
               Gerenciador de metas
@@ -185,7 +275,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 
           </div>
 
-          {/* View Mode Toggle */}
+   
           <div className="flex justify-center mb-6">
             <div className="flex bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-lg p-1 border border-white/20 dark:border-slate-700/50">
               <button
@@ -224,7 +314,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
             </div>
           </div>
 
-          {/* Tasks Display */}
+
           <Card className="mb-6 backdrop-blur-xl bg-white/80 dark:bg-slate-800/80 border-white/20 dark:border-slate-700/50 shadow-2xl">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-slate-800 dark:text-slate-200">
@@ -238,7 +328,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
             </CardContent>
           </Card>
 
-          {/* Input Form */}
+   
           <Card className="backdrop-blur-xl bg-white/80 dark:bg-slate-800/80 border-white/20 dark:border-slate-700/50 shadow-2xl">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="flex space-x-3">
