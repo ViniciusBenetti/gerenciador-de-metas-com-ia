@@ -35,8 +35,8 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   setIsLoading(true);
   setMessage('');
 
-  try {
-    const response = await fetch('https://vinixodin.com/api/gerenciadorIA3?a=1', {
+  
+    const submitResponse = await fetch('https://vinixodin.com/api/gerenciadorIA3?a=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,8 +48,8 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         isCadastro: !isLogin
       })
     });
-    console.log('POST Status:', response.status);
-    console.log('POST Cabeçalhos:', [...response.headers]);
+    console.log('POST Status:', submitResponse.status);
+    console.log('POST Cabeçalhos:', [...submitResponse.headers]);
     if (!response.ok) {
       throw new Error(`Erro ao submeter URL para análise: ${submitResponse.status} - ${submitResponse.statusText}`);
     }
@@ -66,12 +66,7 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     } else {
       setMessage(data.mensagem || 'Erro na operação');
     }
-  } catch (error) {
-    console.error('Erro:', error);
-    setMessage('Erro ao conectar com o servidor. Tente novamente.');
-  } finally {
-    setIsLoading(false);
-  }
+  
 };
   return (
     <div className="min-h-screen transition-all duration-500">
