@@ -30,53 +30,36 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     })
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setMessage('')
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setMessage('');
 
-    try {
+  try {
+    const response = await axios.post('https://vinixodin.com/api/gerenciadorIA3', {
+      email: formData.email,
+      password: formData.password,
+      isCadastro: !isLogin
+    });
 
-      axios({
-      
-        method: 'post',
-      
-        url: 'https://vinixodin.com/api/gerenciadorIA3',
-      
-        data: {
-      
-          email: formData.email,
-          password: formData.password,
-          isCadastro: !isLogin
-      
-        }
-      
-      }).then(response =>{ console.log(response)
-        
-        if (response.ok) {
-          const data = response.data
+    const data = response.data;
 
-        if(data.mensagem == "sucesso"){
-        setMessage(data.mensagem || 'Operação realizada com sucesso!')
-        // Simular login bem-sucedido e navegar para home
-        setTimeout(() => {
-          sessionStorage.setItem("chave",formData.email)
-          navigate('/home')
-        }, 1500)
-      } else {
-        setMessage(data.mensagem || 'Erro na operação')
-      }
+    if (data.mensagem === 'email cadastrado com sucesso' || data.mensagem === 'logado com sucesso') {
+      setMessage('Operação realizada com sucesso!');
+      sessionStorage.setItem('chave', formData.email);
+      setTimeout(() => {
+        navigate('/home');
+      }, 1500);
+    } else {
+      setMessage(data.mensagem || 'Erro na operação');
     }
-      }).catch(error => console.log(error));
-
-    
-    } catch (error) {
-      setMessage('Erro ao conectar com o servidor. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
+  } catch (error) {
+    console.error('Erro:', error);
+    setMessage('Erro ao conectar com o servidor. Tente novamente.');
+  } finally {
+    setIsLoading(false);
   }
-
+}
   return (
     <div className="min-h-screen transition-all duration-500">
       {/* Theme Toggle Button */}

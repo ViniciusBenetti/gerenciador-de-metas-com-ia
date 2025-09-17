@@ -12,7 +12,7 @@ import {
   Trash2
 } from 'lucide-react'
 import axios from 'axios'
-import { set } from 'date-fns'
+
 
 // Componente de Loading Inovador
 const InnovativeLoader = ({ size = 'md', message = 'Carregando...' }) => {
@@ -85,162 +85,150 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   const [viewMode, setViewMode] = useState('list')
   const [isLoading, setIsLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [message, setMessage] = useState('')
 
  
   useEffect(() => {
-    
-    const chave = sessionStorage.getItem("chave")
+  const chave = sessionStorage.getItem("chave");
 
-    
-    if (!chave) {
-  
-      navigate('/')
-    }else{
-      setIsLoading(true)
-      axios.get('https://vinixodin.com/api/cronometrar3')
-      
-    .then(response => {     
-    const userReceiver = response.data.receivers.find(receiver => 
-    receiver.email === userEmail
-    );
-    
-    if (userReceiver) {
-      const userTasks = userReceiver.tarefas;
-      setTasks(userTasks); 
-      console.log('Tarefas do usuário:', userTasks);
-    } else {
-      console.log('Usuário não encontrado');
-      setTasks([]); 
-    }
-        
-    })
-      
-    .catch(error => console.log(error).finally(()=>setIsLoading(false))
-  
-  );
-    }
-    if (typeof localStorage !== 'undefined') {
-      const prompt = localStorage.getItem("prompt")
-      if (prompt) {
-        setNewTask(prompt)
-      }
-    }
-    
-  }, [])
+  if (!chave) {
+    navigate('/');
+    return;
+  }
 
-  const handleToggleEdit = () => {
-    if (isEditing) {
-      try {
-          axios({
-          
-            method: 'post',
-          
-            url: 'https://vinixodin.com/api/cronometrar3',
-          
-            data: {
-          
-              email:sessionStorage.getItem("chave"), 
-              tarefas: tasks
-          
-            }
-          
-          })
-          
-            .then(response => console.log(response))
-          
-            .catch(error => console.log(error));
-     
-      } catch (error) {
-        alert('JSON inválido! Por favor, corrija o formato.');
-        return;
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      setMessage('');
+
+      const response = await axios.get('https://vinixodin.com/api/cronometrar3');
+      const userReceiver = response.data.receivers.find(receiver => receiver.email === chave);
+
+      if (userReceiver) {
+        setTasks(userReceiver.tarefas || []);
+        setMessage('Tarefas carregadas com sucesso!');
+      } else {
+        setTasks([]);
+        setMessage('Nenhuma tarefa encontrada para o usuário.');
       }
+    } catch (error) {
+      console.error('Erro ao carregar tarefas:', error);
+      setTasks([]);
+      setMessage('Erro ao conectar com o servidor. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsEditing(!isEditing); 
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!newTask.trim()) 
-    return 
-  
-   setIsLoading(true)
+  fetchTasks();
 
-    await axios({
-    
-        method: 'post',
-    
-        url: 'https://flask232.onrender.com',
-    
-        data: {
-    
-            
-            planning:newTask
-    
+  if (typeof localStorage !== 'undefined') {
+    const prompt = localStorage.getItem("prompt");
+    if (prompt) {
+      setNewTask(prompt);
+    }
+  }
+}, []);
+
+ const handleToggleEdit = async () => {
+  if (isEditing) {
+    try {
+      setIsLoading(true);
+      setMessage('');
+
+      // Salvar as tarefas
+      const response = await axios.post('https://vinixodin.com/api/cronometrar3', {
+        email: sessionStorage.getItem("chave"),
+        tarefas: tasks
+      });
+
+      if (response.data.mensagem === 'sucesso') {
+        setMessage('Tarefas salvas com sucesso!');
+
+        // Recarregar as tarefas do servidor
+        const fetchResponse = await axios.get('https://vinixodin.com/api/cronometrar3');
+        const userReceiver = fetchResponse.data.receivers.find(receiver => receiver.email === sessionStorage.getItem("chave"));
+
+        if (userReceiver) {
+          setTasks(userReceiver.tarefas || []);
+          setMessage('Tarefas salvas e recarregadas com sucesso!');
+        } else {
+          setTasks([]);
+          setMessage('Nenhuma tarefa encontrada para o usuário após salvar.');
         }
-    
-    })
-    
-        .then(response =>{ 
-          const tarefasGeradas = response.data;
-       
-            axios({
-            
-              method: 'post',
-            
-              url: 'https://vinixodin.com/api/cronometrar3',
-            
-              data: {
-            
-                email:sessionStorage.getItem("chave"),
-                tarefas:tarefasGeradas
-            
-              }
-            
-            })
-            
-            .then(resposta2 =>{ console.log(response)  
-            setTasks(resposta2.data)
-            localStorage.setItem("prompt",newTask)
-            setIsLoading(false)      
-        })
-            
-              .catch(error => console.log(error));
-           }
-
-    
-    )
-    
-        .catch(error =>{ console.log(error);
-  
-            setTasks([])
-            setNewTask('')
-            setIsLoading(false)});
-    
-      
-  }
-
-  const deleteTask = (label) => {
-    axios({
-    
-      method: 'post',
-    
-      url: 'https://vinixodin.com/api/apagarCronometrar3',
-    
-      data: {
-    
-        email:sessionStorage.getItem("chave"),
-        label: label
-    
+      } else {
+        setMessage('Erro ao salvar as tarefas.');
       }
-    
-    })
-    
-      .then(response =>
-         console.log(response))
-    
-      .catch(error =>
-         console.log(error));
+    } catch (error) {
+      console.error('Erro:', error);
+      setMessage('Erro ao conectar com o servidor. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   }
+  setIsEditing(!isEditing);
+}
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!newTask.trim()) return;
+
+  setIsLoading(true);
+  setMessage('');
+
+  try {
+    // Primeira requisição para flask232
+    const response1 = await axios.post('https://flask232.onrender.com', {
+      planning: newTask
+    });
+
+    const tarefasGeradas = response1.data;
+
+    // Segunda requisição para /cronometrar3
+    const response2 = await axios.post('https://vinixodin.com/api/cronometrar3', {
+      email: sessionStorage.getItem("chave"),
+      tarefas: tarefasGeradas
+    });
+
+    if (response2.data.mensagem === 'sucesso') {
+      setTasks(response2.data.tarefas || tarefasGeradas);
+      localStorage.setItem("prompt", newTask);
+      setMessage('Tarefa processada com sucesso!');
+    } else {
+      setMessage('Erro ao processar a tarefa.');
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    setTasks([]);
+    setMessage('Erro ao conectar com o servidor. Tente novamente.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const deleteTask = async (label) => {
+  try {
+    setIsLoading(true);
+    setMessage('');
+
+    const response = await axios.post('https://vinixodin.com/api/apagarCronometrar3', {
+      email: sessionStorage.getItem("chave"),
+      label: label
+    });
+
+    if (response.data.mensagem === 'sucesso') {
+      setTasks((prevTasks) => prevTasks.filter((task) => task.label !== label));
+      setMessage('Tarefa excluída com sucesso!');
+    } else {
+      setMessage('Erro ao excluir a tarefa.');
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    setMessage('Erro ao conectar com o servidor. Tente novamente.');
+  } finally {
+    setIsLoading(false);
+  }
+}
 
   const renderTasks = () => {
     if (isLoading) {
@@ -440,6 +428,15 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
           </Card>
         </div>
       </div>
+          {message && (
+      <div className={`p-3 rounded-lg text-sm text-center ${
+        message.includes('Erro') 
+          ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
+          : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
+      }`}>
+        {message}
+      </div>
+    )}
     </div>
   )
 }
