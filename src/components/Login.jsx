@@ -36,7 +36,7 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   setMessage('');
 
   try {
-    const response = await fetch('https://vinixodin.com/api/gerenciadorIA3', {
+    const response = await fetch('https://vinixodin.com/api/gerenciadorIA3?a=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
