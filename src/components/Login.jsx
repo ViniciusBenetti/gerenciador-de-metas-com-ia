@@ -35,27 +35,14 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   setIsLoading(true);
   setMessage('');
 
-  
-    const submitResponse = await fetch('https://vinixodin.com/api/gerenciadorIA3?a=1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-        isCadastro: !isLogin
-      })
+  try {
+    const response = await axios.post('https://vinixodin.com/api/gerenciadorIA3', {
+      email: formData.email,
+      password: formData.password,
+      isCadastro: !isLogin
     });
-    console.log('POST Status:', submitResponse.status);
-    console.log('POST Cabeçalhos:', [...submitResponse.headers]);
-    if (!response.ok) {
-      throw new Error(`Erro ao submeter URL para análise: ${submitResponse.status} - ${submitResponse.statusText}`);
-    }
 
-
-    const data = await response.json();
+    const data = response.data;
 
     if (data.mensagem === 'email cadastrado com sucesso' || data.mensagem === 'logado com sucesso') {
       setMessage('Operação realizada com sucesso!');
@@ -66,8 +53,13 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     } else {
       setMessage(data.mensagem || 'Erro na operação');
     }
-  
-};
+  } catch (error) {
+    console.error('Erro:', error);
+    setMessage('Erro ao conectar com o servidor. Tente novamente.');
+  } finally {
+    setIsLoading(false);
+  }
+}
   return (
     <div className="min-h-screen transition-all duration-500">
       {/* Theme Toggle Button */}
