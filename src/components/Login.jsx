@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Label } from '@/components/ui/label.jsx'
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
+import axios from 'axios'
 
 function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   const navigate = useNavigate()
@@ -35,21 +36,27 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
     setMessage('')
 
     try {
-      const response = await fetch('https://vinixodin.com/api/gerenciadorIA3', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+
+      axios({
+      
+        method: 'post',
+      
+        url: 'https://vinixodin.com/api/gerenciadorIA3',
+      
+        data: {
+      
           email: formData.email,
           password: formData.password,
           isCadastro: !isLogin
-        })
-      })
-
-      const data = await response.json()
       
-      if (response.ok) {
+        }
+      
+      }).then(response =>{ console.log(response)
+        
+        if (response.ok) {
+          const data = response.data
+
+        if(data.mensagem == "sucesso"){
         setMessage(data.mensagem || 'Operação realizada com sucesso!')
         // Simular login bem-sucedido e navegar para home
         setTimeout(() => {
@@ -59,6 +66,10 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       } else {
         setMessage(data.mensagem || 'Erro na operação')
       }
+    }
+      }).catch(error => console.log(error));
+
+    
     } catch (error) {
       setMessage('Erro ao conectar com o servidor. Tente novamente.')
     } finally {
