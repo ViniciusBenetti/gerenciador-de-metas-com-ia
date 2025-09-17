@@ -184,6 +184,10 @@ const handleSubmit = async (e) => {
 
     const tarefasGeradas = response1.data;
 
+    if(!JSON.stringify(tarefasGeradas)){
+       setMessage("inteligencia artificial falhou, tente novamente")
+      return
+    }
     // Segunda requisição para /cronometrar3
     const response2 = await axios.post('https://vinixodin.com/api/cronometrar3', {
       email: sessionStorage.getItem("chave"),
@@ -257,8 +261,8 @@ const deleteTask = async (label) => {
             onChange={(e) => setTasks(e.target.value)}
           />
         ) : (
-          <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200">
-            {JSON.stringify(tasks, null, 2)}
+          <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200" style={{ whiteSpace: 'pre' }}>
+          {JSON.stringify(tasks, null, 2)}
           </pre>
         )}
       </div>
