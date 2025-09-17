@@ -48,6 +48,12 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         isCadastro: !isLogin
       })
     });
+    console.log('POST Status:', response.status);
+    console.log('POST Cabeçalhos:', [...response.headers]);
+    if (!response.ok) {
+      throw new Error(`Erro ao submeter URL para análise: ${submitResponse.status} - ${submitResponse.statusText}`);
+    }
+
 
     const data = await response.json();
 
