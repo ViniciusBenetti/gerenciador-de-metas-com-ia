@@ -36,13 +36,26 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   setMessage('');
 
   try {
-    const response = await axios.post('https://vinixodin.com/api/gerenciadorIA3', {
-      email: formData.email,
-      password: formData.password,
-      isCadastro: !isLogin
+    const response = await fetch('https://vinixodin.com/api/gerenciadorIA3', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        isCadastro: !isLogin
+      })
     });
+    console.log('POST Status:', response.status);
+    console.log('POST Cabeçalhos:', [...response.headers]);
+    if (!response.ok) {
+      throw new Error(`Erro ao submeter URL para análise: ${submitResponse.status} - ${submitResponse.statusText}`);
+    }
 
-    const data = response.data;
+
+    const data = await response.json();
 
     if (data.mensagem === 'email cadastrado com sucesso' || data.mensagem === 'logado com sucesso') {
       setMessage('Operação realizada com sucesso!');
@@ -59,7 +72,7 @@ function Login({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   } finally {
     setIsLoading(false);
   }
-}
+};
   return (
     <div className="min-h-screen transition-all duration-500">
       {/* Theme Toggle Button */}
