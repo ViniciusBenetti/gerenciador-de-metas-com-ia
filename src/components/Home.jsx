@@ -451,9 +451,7 @@ const deleteTask = async (label) => {
               </form>
             </CardContent>
           </Card>
-        </div>
-      </div>
-          {message && (
+                    {message && (
       <div className={`p-3 rounded-lg text-sm text-center ${
         message.includes('Erro') 
           ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' 
@@ -462,6 +460,9 @@ const deleteTask = async (label) => {
         {message}
       </div>
     )}
+        </div>
+      </div>
+
     </div>
   )
 }
