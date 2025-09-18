@@ -178,7 +178,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 }
 
 const handleSubmit = async (e) => {
-  localStorage.setItem(newTask)
+  localStorage.setItem("prompt",newTask)
 
   if (!newTask.trim()) return;
 
