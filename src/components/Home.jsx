@@ -174,6 +174,9 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       setIsLoading(false);
     }
   }
+  if(!isEditing){
+    setNewTasks(tasks);
+  }
   setIsEditing(!isEditing);
   
 }
