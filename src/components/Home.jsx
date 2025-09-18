@@ -172,6 +172,8 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       setNewTasks(tasks)
       setIsLoading(false);
     }
+  }else{
+    setNewTasks(JSON.stringify(tasks))
   }
   setIsEditing(!isEditing);
   
@@ -187,9 +189,16 @@ const handleSubmit = async (e) => {
 
   try {
     // Primeira requisição para flask232
-    const response1 = await axios.post('https://flask232.onrender.com', {
+    const response1 = await axios({
+    method: 'post',
+    url: 'https://flask232.onrender.com',
+    data: {
       planning: newTask
-    });
+    },
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 
     const tarefasGeradas = response1.data;
 
