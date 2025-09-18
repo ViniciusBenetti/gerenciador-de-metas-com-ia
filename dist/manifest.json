@@ -1,0 +1,16 @@
+{
+  "name": "gerenciador de metas inteligente",
+  "short_name": "gerenciador inteligente",
+  "start_url": ".",
+  "orientation":"portrait",
+  "display": "minimal-ui",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://vinixodin.com/apps/gerenciadorialogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
