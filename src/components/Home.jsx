@@ -178,6 +178,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 }
 
 const handleSubmit = async (e) => {
+  localStorage.setItem(newTask)
   e.preventDefault();
   if (!newTask.trim()) return;
 
@@ -211,6 +212,7 @@ const handleSubmit = async (e) => {
 
         if (userReceiver && Array.isArray(userReceiver.tarefas)) {
           setTasks(userReceiver.tarefas || []);
+
           setMessage('Tarefas salvas e recarregadas com sucesso!');
         } else {
           setNewTasks(tasks)
@@ -282,9 +284,12 @@ const deleteTask = async (label) => {
             onChange={(e) => setNewTasks(e.target.value)}
           />
         ) : (
-          <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200" style={{ whiteSpace: 'pre' }}>
-          {tasks}
-          </pre>
+          <pre
+          className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200"
+          style={{ whiteSpace: 'pre' }}
+        >
+          {JSON.stringify(tasks, null, 2)}
+        </pre>
         )}
       </div>
     );
