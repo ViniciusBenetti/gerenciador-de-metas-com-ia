@@ -1,0 +1,16 @@
+{
+  "name": "verificador de url",
+  "short_name": "verificador",
+  "start_url": ".",
+  "orientation":"portrait",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://vinixodin.com/apps/verificadorlogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
