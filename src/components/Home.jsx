@@ -179,7 +179,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
 
 const handleSubmit = async (e) => {
   localStorage.setItem(newTask)
-  e.preventDefault();
+
   if (!newTask.trim()) return;
 
   setIsLoading(true);
