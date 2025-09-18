@@ -280,7 +280,7 @@ const deleteTask = async (label) => {
         {isEditing ? (
           <textarea
             className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200 w-full font-mono"
-            value={newTasks}
+            value={JSON.stringify(newTasks,null,2)}
             onChange={(e) => setNewTasks(e.target.value)}
           />
         ) : (
