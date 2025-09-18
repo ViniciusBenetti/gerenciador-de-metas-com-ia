@@ -12,6 +12,7 @@ import {
   Trash2
 } from 'lucide-react'
 import axios from 'axios'
+import ReactJson from 'react-json-view'
 
 
 // Componente de Loading Inovador
@@ -172,15 +173,13 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       setNewTasks(tasks)
       setIsLoading(false);
     }
-  }else{
-    setNewTasks(JSON.stringify(tasks))
   }
   setIsEditing(!isEditing);
   
 }
 
 const handleSubmit = async (e) => {
-  localStorage.setItem("prompt",newTask)
+  e.preventDefault()
 
   if (!newTask.trim()) return;
 
@@ -189,16 +188,9 @@ const handleSubmit = async (e) => {
 
   try {
     // Primeira requisição para flask232
-    const response1 = await axios({
-    method: 'post',
-    url: 'https://flask232.onrender.com',
-    data: {
+    const response1 = await axios.post('https://flask232.onrender.com', {
       planning: newTask
-    },
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+    });
 
     const tarefasGeradas = response1.data;
 
@@ -236,6 +228,7 @@ const handleSubmit = async (e) => {
     setNewTasks([])
     setMessage('Erro ao conectar com o servidor. Tente novamente.');
   } finally {
+    localStorage.setItem("prompt",newTask)
     setNewTasks(tasks)
     setIsLoading(false);
   }
@@ -275,34 +268,54 @@ const deleteTask = async (label) => {
     );
   }
     if (viewMode === 'json') {
-      return (
-      <div className="relative">
-        
-        <button
-          onClick={handleToggleEdit}
-          className="absolute top-2 right-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-        >
-          {isEditing ? 'Concluir' : 'Editar'}
-        </button>
+  return (
+    <div className="relative">
+      <button
+        onClick={handleToggleEdit}
+        className="absolute top-2 right-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+      >
+        {isEditing ? 'Concluir' : 'Editar'}
+      </button>
 
-
-        {isEditing ? (
-          <textarea
-            className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200 w-full font-mono"
-            value={JSON.stringify(newTasks,null,2)}
-            onChange={(e) => setNewTasks(e.target.value)}
-          />
-        ) : (
-          <pre
-          className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200"
-          style={{ whiteSpace: 'pre' }}
-        >
-          {JSON.stringify(tasks, null, 2)}
-        </pre>
-        )}
-      </div>
-    );
-    }
+      {isEditing ? (
+        <ReactJson
+          src={typeof newTasks === 'string' ? JSON.parse(newTasks) : newTasks}
+          theme="monokai"
+          collapsed={false}
+          enableClipboard={false}
+          onEdit={(edit) => setNewTasks(edit.updated_src)}
+          onAdd={(add) => setNewTasks(add.updated_src)}
+          onDelete={(del) => setNewTasks(del.updated_src)}
+          style={{
+            backgroundColor: 'rgb(241 245 249)', // bg-slate-100
+            color: 'rgb(30 41 59)', // text-slate-800
+            padding: '1rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            maxHeight: '24rem',
+            overflow: 'auto',
+          }}
+        />
+      ) : (
+        <ReactJson
+          src={typeof tasks === 'string' ? JSON.parse(tasks) : tasks}
+          theme="monokai"
+          collapsed={false}
+          enableClipboard={false}
+          style={{
+            backgroundColor: 'rgb(241 245 249)', // bg-slate-100
+            color: 'rgb(30 41 59)', // text-slate-800
+            padding: '1rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            maxHeight: '24rem',
+            overflow: 'auto',
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
     if (viewMode === 'prompt') {
       const prompt = newTask.length > 0 
