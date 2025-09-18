@@ -269,14 +269,18 @@ const deleteTask = async (label) => {
   }
     if (viewMode === 'json') {
   return (
-    <div className="relative">
-      <button
-        onClick={handleToggleEdit}
-        className="absolute top-2 right-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-      >
-        {isEditing ? 'Concluir' : 'Editar'}
-      </button>
+    <div className="relative bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm max-h-96 overflow-auto">
+      {/* header com botão */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={handleToggleEdit}
+          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+        >
+          {isEditing ? 'Concluir' : 'Editar'}
+        </button>
+      </div>
 
+      {/* conteúdo */}
       {isEditing ? (
         <ReactJson
           src={typeof newTasks === 'string' ? JSON.parse(newTasks) : newTasks}
@@ -287,13 +291,8 @@ const deleteTask = async (label) => {
           onAdd={(add) => setNewTasks(add.updated_src)}
           onDelete={(del) => setNewTasks(del.updated_src)}
           style={{
-            backgroundColor: 'rgb(241 245 249)', // bg-slate-100
-            color: 'rgb(30 41 59)', // text-slate-800
-            padding: '1rem',
-            borderRadius: '0.5rem',
+            backgroundColor: 'transparent',
             fontSize: '0.875rem',
-            maxHeight: '24rem',
-            overflow: 'auto',
           }}
         />
       ) : (
@@ -303,13 +302,8 @@ const deleteTask = async (label) => {
           collapsed={false}
           enableClipboard={false}
           style={{
-            backgroundColor: 'rgb(241 245 249)', // bg-slate-100
-            color: 'rgb(30 41 59)', // text-slate-800
-            padding: '1rem',
-            borderRadius: '0.5rem',
+            backgroundColor: 'transparent',
             fontSize: '0.875rem',
-            maxHeight: '24rem',
-            overflow: 'auto',
           }}
         />
       )}
