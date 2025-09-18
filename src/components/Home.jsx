@@ -86,6 +86,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [message, setMessage] = useState('')
+  const [newTasks,setNewTasks] = useState([])
 
  
   useEffect(() => {
@@ -104,18 +105,22 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       const response = await axios.get('https://vinixodin.com/api/cronometrar3');
       const userReceiver = response.data.receivers.find(receiver => receiver.email === chave);
 
-      if (userReceiver) {
+      if (userReceiver && Array.isArray(userReceiver.tarefas)) {
         setTasks(userReceiver.tarefas || []);
         setMessage('Tarefas carregadas com sucesso!');
+        setNewTasks(tasks)
       } else {
         setTasks([]);
         setMessage('Nenhuma tarefa encontrada para o usuário.');
+        setNewTasks(tasks)
       }
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
       setTasks([]);
+      setNewTasks(tasks)
       setMessage('Erro ao conectar com o servidor. Tente novamente.');
     } finally {
+
       setIsLoading(false);
     }
   };
@@ -139,7 +144,7 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
       // Salvar as tarefas
       const response = await axios.post('https://vinixodin.com/api/cronometrar3', {
         email: sessionStorage.getItem("chave"),
-        tarefas: tasks
+        tarefas: newTasks
       });
 
       if (response.data.mensagem === 'sucesso') {
@@ -149,24 +154,27 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
         const fetchResponse = await axios.get('https://vinixodin.com/api/cronometrar3');
         const userReceiver = fetchResponse.data.receivers.find(receiver => receiver.email === sessionStorage.getItem("chave"));
 
-        if (userReceiver) {
+        if (userReceiver && Array.isArray(userReceiver.tarefas)) {
           setTasks(userReceiver.tarefas || []);
           setMessage('Tarefas salvas e recarregadas com sucesso!');
         } else {
-          setTasks([]);
+          setNewTasks(tasks)
           setMessage('Nenhuma tarefa encontrada para o usuário após salvar.');
         }
       } else {
+        setNewTasks(tasks)
         setMessage('Erro ao salvar as tarefas.');
       }
     } catch (error) {
       console.error('Erro:', error);
       setMessage('Erro ao conectar com o servidor. Tente novamente.');
     } finally {
+      setNewTasks(tasks)
       setIsLoading(false);
     }
   }
   setIsEditing(!isEditing);
+  
 }
 
 const handleSubmit = async (e) => {
@@ -194,18 +202,30 @@ const handleSubmit = async (e) => {
       tarefas: tarefasGeradas
     });
 
-    if (response2.data.mensagem === 'sucesso') {
-      setTasks(response2.data.tarefas || tarefasGeradas);
-      localStorage.setItem("prompt", newTask);
-      setMessage('Tarefa processada com sucesso!');
-    } else {
-      setMessage('Erro ao processar a tarefa.');
-    }
+     if (response2.data.mensagem === 'sucesso') {
+        setMessage('Tarefas salvas com sucesso!');
+
+        // Recarregar as tarefas do servidor
+        const fetchResponse = await axios.get('https://vinixodin.com/api/cronometrar3');
+        const userReceiver = fetchResponse.data.receivers.find(receiver => receiver.email === sessionStorage.getItem("chave"));
+
+        if (userReceiver && Array.isArray(userReceiver.tarefas)) {
+          setTasks(userReceiver.tarefas || []);
+          setMessage('Tarefas salvas e recarregadas com sucesso!');
+        } else {
+          setNewTasks(tasks)
+          setMessage('Nenhuma tarefa encontrada para o usuário após salvar.');
+        }
+      } else {
+        setNewTasks(tasks)
+        setMessage('Erro ao salvar as tarefas.');
+      }
   } catch (error) {
-    console.error('Erro:', error);
-    setTasks([]);
+    setTasks([])
+    setNewTasks([])
     setMessage('Erro ao conectar com o servidor. Tente novamente.');
   } finally {
+    setNewTasks(tasks)
     setIsLoading(false);
   }
 };
@@ -223,6 +243,7 @@ const deleteTask = async (label) => {
     if (response.data.mensagem === 'sucesso') {
       setTasks((prevTasks) => prevTasks.filter((task) => task.label !== label));
       setMessage('Tarefa excluída com sucesso!');
+      setNewTasks(tasks)
     } else {
       setMessage('Erro ao excluir a tarefa.');
     }
@@ -257,12 +278,12 @@ const deleteTask = async (label) => {
         {isEditing ? (
           <textarea
             className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200 w-full font-mono"
-            value={tasks}
-            onChange={(e) => setTasks(e.target.value)}
+            value={newTasks}
+            onChange={(e) => setNewTasks(e.target.value)}
           />
         ) : (
           <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-sm overflow-auto max-h-96 text-slate-800 dark:text-slate-200" style={{ whiteSpace: 'pre' }}>
-          {JSON.stringify(tasks, null, 2)}
+          {tasks}
           </pre>
         )}
       </div>
