@@ -191,7 +191,7 @@ const handleSubmit = async (e) => {
 
   try {
     // Primeira requisição para flask232
-    const response1 = await axios.post('https://flask232.onrender.com', {
+    const response1 = await axios.post('https://gerenciadoria.onrender.com', {
       planning: newTask
     });
 
