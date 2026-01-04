@@ -181,58 +181,171 @@ function Home({ isDarkMode, toggleTheme, ThemeToggleButton }) {
   
 }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
 
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const API_KEY = "AIzaSyA6jUEbOIA8UcRFzhukFgCO1JZl-kWkZG4";
   if (!newTask.trim()) return;
 
   setIsLoading(true);
   setMessage('');
 
   try {
-    // Primeira requisição para flask232
-    const response1 = await axios.post('https://gerenciadoria.onrender.com', {
-      planning: newTask
+    // Obter data e hora atuais
+    const now = new Date();
+    const currentDate = now.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const currentTime = now.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
     });
 
-    const tarefasGeradas = response1.data;
+    // Prompt combinado para o Gemini
+    const prompt = `Você é um interpretador avançado de metas únicas em português.
 
-    if(!JSON.stringify(tarefasGeradas)){
-       setMessage("inteligencia artificial falhou, tente novamente")
-      return
+DATA E HORA ATUAIS: ${currentDate} às ${currentTime}
+
+REGRAS OBRIGATÓRIAS:
+1. Interprete APENAS metas únicas (objetivos pontuais), NÃO hábitos ou rotinas recorrentes
+2. Para cada meta identificada, retorne um objeto JSON com:
+   - "label": descrição completa da meta em português SEM datas/horários, removendo TODOS os acentos, cedilhas, emojis e caracteres especiais (apenas ASCII válido). Ex: "maçã" → "maca", "ação" → "acao"
+   - "start_date": opcional, formato "dd/mm/yyyy". Use apenas se houver indicação explícita de início ("a partir de", "começando em", "inicio em"). Se ausente, use a data atual: ${currentDate}
+   - "end_date": OBRIGATÓRIO, formato "dd/mm/yyyy". Se apenas uma data for mencionada SEM indicação de início, trate como end_date
+   - "time": OBRIGATÓRIO, formato "HH:mm" (24h). Se não mencionado, use: ${currentTime}
+
+3. VALIDAÇÕES:
+   - Se "label" estiver faltando → retorne: {"error": "Missing label for goal"}
+   - Se "end_date" estiver faltando → retorne: {"error": "Missing end_date for goal"}
+   - Se "time" estiver faltando → retorne: {"error": "Missing time for goal"}
+   - Se houver indicação de start_date mas end_date estiver faltando → retorne: {"error": "Missing end_date for goal with start_date cue"}
+
+4. end_date e time devem SEMPRE estar juntos. start_date é opcional.
+
+ENTRADA DO USUÁRIO:
+${newTask}
+
+RESPONDA APENAS COM UM ARRAY JSON VÁLIDO, sem explicações adicionais. Exemplo:
+[
+  {
+    "label": "atingir 10000 seguidores no Instagram",
+    "start_date": "22/09/2025",
+    "end_date": "30/09/2025",
+    "time": "14:00"
+  },
+  {
+    "label": "finalizar o curso de programacao",
+    "end_date": "25/09/2025",
+    "time": "16:30"
+  }
+]`;
+
+    // Requisição para a API do Google Gemini
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemma-2-27b-it:generateContent',
+      {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-goog-api-key': API_KEY 
+        },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ text: prompt }] 
+          }],
+          generationConfig: {
+            temperature: 0.2
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erro na API do Google: ${response.status}`);
     }
-    // Segunda requisição para /cronometrar3
+
+    const data = await response.json();
+    
+    // Extrair o texto da resposta do Gemini
+    const geminiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!geminiResponse) {
+      setMessage("Inteligência artificial falhou, tente novamente");
+      return;
+    }
+
+    // Limpar e parsear o JSON
+    let tarefasGeradas;
+    try {
+      // Remover possíveis markdown code blocks
+      const cleanedResponse = geminiResponse
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      
+      tarefasGeradas = JSON.parse(cleanedResponse);
+      
+      // Verificar se há erros nas tarefas
+      const hasErrors = tarefasGeradas.some(tarefa => tarefa.error);
+      if (hasErrors) {
+        setMessage("Algumas metas não puderam ser processadas. Verifique os dados fornecidos.");
+        console.error("Erros encontrados:", tarefasGeradas.filter(t => t.error));
+      }
+      
+      // Filtrar apenas tarefas válidas (sem erros)
+      tarefasGeradas = tarefasGeradas.filter(tarefa => !tarefa.error);
+      
+      if (tarefasGeradas.length === 0) {
+        setMessage("Nenhuma meta válida foi identificada. Tente reformular.");
+        return;
+      }
+      
+    } catch (parseError) {
+      console.error("Erro ao parsear JSON:", parseError);
+      console.log("Resposta recebida:", geminiResponse);
+      setMessage("Erro ao processar resposta da IA. Tente novamente.");
+      return;
+    }
+
+    // Segunda requisição para salvar no servidor
     const response2 = await axios.post('https://vinixodin.com/api/cronometrar3', {
       email: sessionStorage.getItem("chave"),
       tarefas: tarefasGeradas
     });
 
-     if (response2.data.mensagem === 'sucesso') {
-        setMessage('Tarefas salvas com sucesso!');
+    if (response2.data.mensagem === 'sucesso') {
+      setMessage('Tarefas salvas com sucesso!');
 
-        // Recarregar as tarefas do servidor
-        const fetchResponse = await axios.get('https://vinixodin.com/api/cronometrar3');
-        const userReceiver = fetchResponse.data.receivers.find(receiver => receiver.email === sessionStorage.getItem("chave"));
+      // Recarregar as tarefas do servidor
+      const fetchResponse = await axios.get('https://vinixodin.com/api/cronometrar3');
+      const userReceiver = fetchResponse.data.receivers.find(
+        receiver => receiver.email === sessionStorage.getItem("chave")
+      );
 
-        if (userReceiver && Array.isArray(userReceiver.tarefas)) {
-          setTasks(userReceiver.tarefas || []);
-
-          setMessage('Tarefas salvas e recarregadas com sucesso!');
-        } else {
-          setNewTasks(tasks)
-          setMessage('Nenhuma tarefa encontrada para o usuário após salvar.');
-        }
+      if (userReceiver && Array.isArray(userReceiver.tarefas)) {
+        setTasks(userReceiver.tarefas || []);
+        setMessage('Tarefas salvas e recarregadas com sucesso!');
       } else {
-        setNewTasks(tasks)
-        setMessage('Erro ao salvar as tarefas.');
+        setNewTasks(tasks);
+        setMessage('Nenhuma tarefa encontrada para o usuário após salvar.');
       }
+    } else {
+      setNewTasks(tasks);
+      setMessage('Erro ao salvar as tarefas.');
+    }
+    
   } catch (error) {
-    setTasks([])
-    setNewTasks([])
+    console.error("Erro completo:", error);
+    setTasks([]);
+    setNewTasks([]);
     setMessage('Erro ao conectar com o servidor. Tente novamente.');
   } finally {
-    localStorage.setItem("prompt",newTask)
-    setNewTasks(tasks)
+    localStorage.setItem("prompt", newTask);
+    setNewTasks(tasks);
     setIsLoading(false);
   }
 };
